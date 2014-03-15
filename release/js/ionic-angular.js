@@ -1789,7 +1789,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
             <div class="item-edit" ng-if="deleteClick !== undefined">\
               <button class="button button-icon icon" ng-class="deleteIconClass" ng-click="deleteClick()" ion-stop-event="click"></button>\
             </div>\
-            <a class="item-content" ng-href="{{ href }}" ng-transclude></a>\
+            <a class="item-content" ng-href="{{ href }}" target="{{ target }}" ng-transclude></a>\
             <div class="item-drag" ng-if="reorderIconClass !== undefined">\
               <button data-ionic-action="reorder" class="button button-icon icon" ng-class="reorderIconClass"></button>\
             </div>\
@@ -1803,6 +1803,11 @@ angular.module('ionic.ui.list', ['ngAnimate'])
 
       var $parentScope = list.scope;
       var $parentAttrs = list.attrs;
+
+      $scope.target = '_self';
+      $attr.$observe('target', function(value) {
+        if(value) $scope.target = value.trim();
+      });
 
       $attr.$observe('href', function(value) {
         if(value) $scope.href = value.trim();

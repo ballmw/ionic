@@ -5,7 +5,6 @@ angular.module('ionic.ui.navBar', ['ionic.service.view', 'ngSanitize'])
  * @ngdoc controller
  * @name ionicNavBar
  * @module ionic
- * @group navigation
  * @description
  * Controller for the {@link ionic.directive:ionNavBar} directive.
  */
@@ -108,6 +107,23 @@ function($scope, $element, $ionicViewService, $animate, $compile) {
   };
 
   /**
+   * @ngdoc method
+   * @name ionicNavBar#getTitle
+   * @returns {string} The current title of the navbar.
+   */
+  this.getTitle = function() {
+    return $scope.title || '';
+  };
+  /**
+   * @ngdoc method
+   * @name ionicNavBar#getPreviousTitle
+   * @returns {string} The previous title of the navbar.
+   */
+  this.getPreviousTitle = function() {
+    return $scope.oldTitle || '';
+  };
+
+  /**
    * @private
    * Exposed for testing
    */
@@ -158,7 +174,6 @@ function($scope, $element, $ionicViewService, $animate, $compile) {
  * @ngdoc directive
  * @name ionNavBar
  * @module ionic
- * @group navigation
  * @controller ionicNavBar
  * @restrict E
  *
@@ -178,7 +193,7 @@ function($scope, $element, $ionicViewService, $animate, $compile) {
  *   <!-- The nav bar that will be updated as we navigate -->
  *   <ion-nav-bar
  *     animation="nav-title-slide-ios7"
- *     type="bar-positive"></ion-nav-bar>
+ *     class="bar-positive"></ion-nav-bar>
  *
  *   <!-- where the initial view template will be rendered -->
  *   <ion-nav-view animation="slide-left-right"></ion-nav-view>
@@ -189,7 +204,6 @@ function($scope, $element, $ionicViewService, $animate, $compile) {
  * {@link ionic.controller:ionicNavBar ionicNavBar controller} to.
  * Default: assigns it to $scope.navBarController.
  * @param animation {string=} The animation used to transition between titles.
- * @param type {string=} The className for the navbar.  For example, 'bar-positive'.
  * @param align {string=} Where to align the title of the navbar.
  * Available: 'left', 'right', 'center'. Defaults to 'center'.
  */
@@ -203,7 +217,6 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
     controller: '$ionicNavBar',
     scope: {
       animation: '@',
-      type: '@',
       alignTitle: '@'
     },
     template:
@@ -217,8 +230,7 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
     compile: function(tElement, tAttrs, transclude) {
 
       return function link($scope, $element, $attr, navBarCtrl) {
-        $parse($attr.model || 'navBarController')
-          .assign($scope.$parent, navBarCtrl);
+        $parse($attr.model || 'navBarController').assign($scope.$parent, navBarCtrl);
 
         //Put transcluded content (usually a back button) before the rest
         transclude($scope, function(clone) {
@@ -232,8 +244,7 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
         $scope.isInvisible = true;
 
         $scope.navBarClass = function() {
-          return ($scope.type ? ' ' + $scope.type : '') +
-            ($scope.isReverse ? ' reverse' : '') +
+          return ($scope.isReverse ? ' reverse' : '') +
             ($scope.isInvisible ? ' invisible' : '') +
             ($scope.shouldAnimate && $scope.animation ? ' ' + $scope.animation : '');
         };
@@ -247,17 +258,14 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
  * @name ionNavBackButton
  * @module ionic
  * @restrict E
- * @group navigation
  * @parent ionNavBar
  * @description
  * Creates a back button inside an {@link ionic.directive:ionNavBar}.
  *
  * Will show up when the user is able to go back in the current navigation stack.
  *
- * By default, will go back when clicked.  If you wish to set a custom action on click,
- * simply define an `ng-click` attribute and use
- * {@link ionic.controller:ionicNavBar#back ionicNavBar controller's .back method} to go back
- * when wished.
+ * By default, will go back when clicked.  If you wish for more advanced behavior, see the
+ * examples below.
  *
  * @usage
  *
@@ -271,18 +279,30 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
  * </ion-nav-bar>
  * ```
  *
- * With custom click action:
+ * With custom click action, using {@link ionic.controller:ionicNavBar ionicNavBar controller}:
  *
  * ```html
- * <ion-nav-bar>
+ * <ion-nav-bar model="navBarController">
  *   <ion-nav-back-button class="button-icon"
  *     ng-click="canGoBack && navBarController.back()">
- *     <i class="ion-arrow-left-c"></i> Back!
+ *     <i class="ion-arrow-left-c"></i> Back
  *   </ion-nav-back-button>
  * </ion-nav-bar>
  * ```
+ *
+ * Displaying the previous title on the back button, again using
+ * {@link ionic.controller:ionicNavBar ionicNavBar controller}.
+ *
+ * ```html
+ * <ion-nav-bar model="navBarController">
+ *   <ion-nav-back-button class="button button-icon ion-arrow-left-c">
+ *     {% raw %}{{navBarController.getPreviousTitle() || 'Back'}}{% endraw %}
+ *   </ion-nav-back-button>
+ * </ion-nav-bar>
+ * ```
+ *
  */
-.directive('ionNavBackButton', [function() {
+.directive('ionNavBackButton', ['$ionicNgClick', function($ionicNgClick) {
   return {
     restrict: 'E',
     require: '^ionNavBar',
@@ -292,8 +312,9 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
       '<button class="button back-button" ng-transclude>' +
       '</button>',
     link: function($scope, $element, $attr, navBarCtrl) {
+      $scope.$navBack = navBarCtrl.back;
       if (!$attr.ngClick) {
-        ionic.on('tap', navBarCtrl.back, $element[0]);
+        $ionicNgClick($scope, $element, '$navBack($event)');
       }
 
       //If the current viewstate does not allow a back button,
@@ -320,7 +341,6 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
  * @name ionNavButtons
  * @module ionic
  * @restrict E
- * @group navigation
  * @parent ionNavView
  *
  * @description
@@ -371,7 +391,7 @@ function($ionicViewService, $rootScope, $animate, $compile, $parse) {
 
         //When our ion-nav-buttons container is destroyed,
         //destroy everything in the navbar
-        $element.on('$destroy', function() {
+        $scope.$on('$destroy', function() {
           $animate.leave(clone);
         });
 

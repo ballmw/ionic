@@ -292,13 +292,16 @@ describe('tabs', function() {
     });
 
     it('should compile a <ion-tab-nav> with all of the relevant attrs', function() {
-      setup('title=1 icon-on=2 icon-off=3 badge=4 badge-style=5');
+      setup('title=1 icon-on=2 icon-off=3 badge=4 badge-style=5 ng-click=6');
       var navItem = angular.element(tabsEl[0].querySelector('.tab-item'));
-      expect(navItem.attr('title')).toEqual('1');
+      //Use .scope for title because we remove title attr
+      //(for dom-tooltip not to appear)
+      expect(navItem.scope().title).toEqual('1');
       expect(navItem.attr('icon-on')).toEqual('2');
       expect(navItem.attr('icon-off')).toEqual('3');
       expect(navItem.attr('badge')).toEqual('4');
       expect(navItem.attr('badge-style')).toEqual('5');
+      expect(navItem.attr('ng-click')).toEqual('6');
 
       expect(navItem.parent()[0]).toBe(tabsCtrl.$tabsElement[0]);
     });
@@ -400,6 +403,12 @@ describe('tabs', function() {
       return element;
     }
 
+    it('should remove title attribute', function() {
+      var el = setup('title="something"');
+      expect(el[0].hasAttribute('title')).toBe(false);
+      expect(el.isolateScope().title).toBe('something');
+    });
+
     // These next two are REALLY specific unit tests,
     // but also are really really vital pieces of code
     it('.isTabActive should be correct', function() {
@@ -437,10 +446,18 @@ describe('tabs', function() {
 
     });
 
-    it('should select tab on click', function() {
+    it('should select tab on click by default', function() {
       var el = setup();
       el.triggerHandler('click');
       expect(tabsCtrl.select).toHaveBeenCalledWith(tabCtrl.$scope, true);
+    });
+
+    it('should use ngClick if defined', function() {
+      var el = setup('ng-click="doSomething()"');
+      el.scope().doSomething = jasmine.createSpy('doSomething');
+      el.triggerHandler('click');
+      expect(tabsCtrl.select).not.toHaveBeenCalled();
+      expect(el.scope().doSomething).toHaveBeenCalled();
     });
 
     it('should have title and only title', function() {

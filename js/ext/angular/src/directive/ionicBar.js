@@ -7,8 +7,7 @@ angular.module('ionic.ui.header', ['ngAnimate', 'ngSanitize'])
   return {
     restrict: 'C',
     link: function($scope, $element, $attr) {
-      // We want to scroll to top when the top of this element is clicked
-      $ionicScrollDelegate.tapScrollToTop($element);
+      $ionicScrollDelegate($scope).tapScrollToTop($element);
     }
   };
 }])
@@ -18,7 +17,6 @@ angular.module('ionic.ui.header', ['ngAnimate', 'ngSanitize'])
  * @name ionHeaderBar
  * @module ionic
  * @restrict E
- * @group page layout
  * @controller ionicBar
  *
  * @description
@@ -35,7 +33,7 @@ angular.module('ionic.ui.header', ['ngAnimate', 'ngSanitize'])
  *
  * @usage
  * ```html
- * <ion-header-bar align-title="left">
+ * <ion-header-bar align-title="left" class="bar-positive">
  *   <div class="buttons">
  *     <button class="button">Left Button</button>
  *   </div>
@@ -56,7 +54,6 @@ angular.module('ionic.ui.header', ['ngAnimate', 'ngSanitize'])
  * @name ionFooterBar
  * @module ionic
  * @restrict E
- * @group page layout
  * @controller ionicBar
  *
  * @description
@@ -76,7 +73,7 @@ angular.module('ionic.ui.header', ['ngAnimate', 'ngSanitize'])
  * <ion-content>
  *   Some content!
  * </ion-content>
- * <ion-footer-bar align-title="left">
+ * <ion-footer-bar align-title="left" class="bar-assertive">
  *   <div class="buttons">
  *     <button class="button">Left Button</button>
  *   </div>
@@ -92,7 +89,7 @@ angular.module('ionic.ui.header', ['ngAnimate', 'ngSanitize'])
 function barDirective(isHeader) {
   var BAR_TEMPLATE = isHeader ?
     '<header class="bar bar-header" ng-transclude></header>' :
-    '<footer class="bar bar-header" ng-transclude></footer>';
+    '<footer class="bar bar-footer" ng-transclude></footer>';
   var BAR_MODEL_DEFAULT = isHeader ?
     'headerBarController' :
     'footerBarController';
@@ -108,7 +105,7 @@ function barDirective(isHeader) {
           alignTitle: $attr.alignTitle || 'center'
         });
 
-        $parse($attr.model || BAR_MODEL_DEFAULT).assign($scope.$parent, hb);
+        $parse($attr.model || BAR_MODEL_DEFAULT).assign($scope.$parent || $scope, hb);
       }
     };
   }];

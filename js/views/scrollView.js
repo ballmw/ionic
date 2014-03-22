@@ -35,7 +35,7 @@ var IS_EMBEDDED_OBJECT_REGEX = /object|embed/i;
 
 	// Create namespaces
 	if (!global.core) {
-		global.core = { effect : {} };
+		var core = global.core = { effect : {} };
 
 	} else if (!core.effect) {
 		core.effect = {};
@@ -688,12 +688,10 @@ ionic.views.Scroll = ionic.views.View.inherit({
       }, false);
 
       var wheelShowBarFn = ionic.debounce(function() {
-        console.log('SHOWFN');
         self.__fadeScrollbars('in');
       }, 500, true);
 
       var wheelHideBarFn = ionic.debounce(function() {
-        console.log('HIDEFN');
         self.__fadeScrollbars('out');
       }, 100, false);
 

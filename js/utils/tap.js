@@ -7,7 +7,7 @@
 
     var ele = target.control || target;
 
-    if(ele.disabled || ele.type === 'file') return;
+    if(ele.disabled || ele.type === 'file' || ele.type === 'range') return;
 
     console.debug('tapElement', ele.tagName, ele.className);
 
@@ -21,7 +21,7 @@
 
     ele.dispatchEvent(clickEvent);
 
-    if(ele.tagName === 'INPUT' || ele.tagName === 'TEXTAREA' || ele.tagName === 'SELECT') {
+    if(ele.tagName === 'INPUT' || ele.tagName === 'TEXTAREA') {
       ele.focus();
       e.preventDefault();
     } else {
@@ -62,8 +62,7 @@
           ele.tagName === "A" ||
           ele.tagName === "BUTTON" ||
           ele.tagName === "LABEL" ||
-          ele.tagName === "TEXTAREA" ||
-          ele.tagName === "SELECT" ) {
+          ele.tagName === "TEXTAREA" ) {
 
         return ionic.tapElement(ele, e);
       }
@@ -131,6 +130,11 @@
     // check if this click's coordinates are different than its touchstart/mousedown
     var c = getCoordinates(event);
 
+    // Quick check for 0,0 which could be simulated mouse click for form submission
+    if(c.x === 0 && c.y === 0) {
+      return false;
+    }
+
     return (c.x > startCoordinates.x + HIT_RADIUS ||
             c.x < startCoordinates.x - HIT_RADIUS ||
             c.y > startCoordinates.y + HIT_RADIUS ||
@@ -186,8 +190,7 @@
   function blurActive() {
     var ele = document.activeElement;
     if(ele && (ele.tagName === "INPUT" ||
-               ele.tagName === "TEXTAREA" ||
-               ele.tagName === "SELECT")) {
+               ele.tagName === "TEXTAREA")) {
       // using a timeout to prevent funky scrolling while a keyboard hides
       setTimeout(function(){
         ele.blur();
@@ -202,21 +205,29 @@
   var tapCoordinates = {}; // used to remember coordinates to ignore if they happen again quickly
   var startCoordinates = {}; // used to remember where the coordinates of the start of the tap
   var CLICK_PREVENT_DURATION = 1500; // max milliseconds ghostclicks in the same area should be prevented
-  var REMOVE_PREVENT_DELAY = 375; // delay after a touchend/mouseup before removing the ghostclick prevent
+  var REMOVE_PREVENT_DELAY = 380; // delay after a touchend/mouseup before removing the ghostclick prevent
   var HIT_RADIUS = 15;
 
-  // set global click handler and check if the event should stop or not
-  document.addEventListener('click', preventGhostClick, true);
+  ionic.Platform.ready(function(){
 
-  // global tap event listener polyfill for HTML elements that were "tapped" by the user
-  ionic.on("tap", tapPolyfill, document);
+    if(ionic.Platform.grade === 'c') {
+      // low performing phones should have a longer ghostclick prevent
+      REMOVE_PREVENT_DELAY = 800;
+    }
 
-  // listeners used to remove ghostclick prevention
-  document.addEventListener('touchend', removeClickPrevent, false);
-  document.addEventListener('mouseup', removeClickPrevent, false);
+    // set global click handler and check if the event should stop or not
+    document.addEventListener('click', preventGhostClick, true);
 
-  // in the case the user touched the screen, then scrolled, it shouldn't fire the click
-  document.addEventListener('touchstart', recordStartCoordinates, false);
-  document.addEventListener('mousedown', recordStartCoordinates, false);
+    // global tap event listener polyfill for HTML elements that were "tapped" by the user
+    ionic.on("tap", tapPolyfill, document);
+
+    // listeners used to remove ghostclick prevention
+    document.addEventListener('touchend', removeClickPrevent, false);
+    document.addEventListener('mouseup', removeClickPrevent, false);
+
+    // in the case the user touched the screen, then scrolled, it shouldn't fire the click
+    document.addEventListener('touchstart', recordStartCoordinates, false);
+    document.addEventListener('mousedown', recordStartCoordinates, false);
+  });
 
 })(this, document, ionic);

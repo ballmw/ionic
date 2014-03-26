@@ -2712,7 +2712,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
             <div class="item-left-edit item-delete" ng-if="deleteClick !== undefined">\
               <button class="button button-icon icon" ng-class="deleteIconClass" ng-click="deleteClick()" ion-stop-event="click"></button>\
             </div>\
-            <a class="item-content" ng-href="{{ href }}" _target="{{ target }}" ng-transclude></a>\
+            <a class="item-content" ng-href="{{ href }}"  target="{{ target }}" ng-transclude></a>\
             <div class="item-right-edit item-reorder" ng-if="reorderIconClass !== undefined">\
               <button data-ionic-action="reorder" data-prevent-scroll="true" class="button button-icon icon" ng-class="reorderIconClass"></button>\
             </div>\

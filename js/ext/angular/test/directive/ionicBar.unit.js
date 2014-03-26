@@ -1,65 +1,65 @@
 describe('bar directives', function() {
   beforeEach(module('ionic'));
 
-  describe('tapScrollToTop', function() {
-    function setup() {
-      var el;
-      inject(function($compile, $rootScope) {
-        el = angular.element('<ion-header-bar>')
-        var container = angular.element('<ion-content>').append(el);
-        ionic.requestAnimationFrame = function(cb) { cb(); };
-        $compile(container)($rootScope.$new());
-        container.controller('$ionicScroll').scrollTop = jasmine.createSpy('scrollTop')
-        $rootScope.$apply();
+  ['<ion-header-bar>', '<ion-nav-bar>'].forEach(function(tpl) {
+    describe('tapScrollToTop ' + tpl, function() {
+      function setup() {
+        var el;
+        inject(function($compile, $rootScope) {
+          el = angular.element(tpl);
+          var container = angular.element('<ion-content>').append(el);
+          ionic.requestAnimationFrame = function(cb) { cb(); };
+          $compile(container)($rootScope.$new());
+          container.controller('$ionicScroll').scrollTop = jasmine.createSpy('scrollTop');
+          $rootScope.$apply();
+        });
+        return el;
+      }
+      it('should listen for tap, unlisten on destroy', function() {
+        var callback;
+        spyOn(ionic, 'on').andCallFake(function(name, cb) {
+          callback = cb;
+        });
+        spyOn(ionic, 'off');
+        var el = setup();
+        expect(ionic.on).toHaveBeenCalledWith('tap', jasmine.any(Function), el[0]);
+        expect(ionic.off).not.toHaveBeenCalled();
+        el.scope().$destroy();
+        expect(ionic.off).toHaveBeenCalledWith('tap', callback, el[0]);
       });
-      return el;
-    }
-    it('should listen for tap, unlisten on destroy', function() {
-      var callback;
-      spyOn(ionic, 'on').andCallFake(function(name, cb) {
-        callback = cb;
+      it('should ignore tap if it\'s in a button', function() {
+        var el = setup();
+        spyOn(ionic.DomUtil, 'rectContains');
+        var child = angular.element('<div class="button">');
+        el.append(child);
+        ionic.trigger('tap', { target: child[0] }, true, true);
+        expect(ionic.DomUtil.rectContains).not.toHaveBeenCalled();
       });
-      spyOn(ionic, 'off');
-      var el = setup();
-      expect(ionic.on).toHaveBeenCalledWith('tap', jasmine.any(Function), el[0]);
-      expect(ionic.off).not.toHaveBeenCalled();
-      el.scope().$destroy();
-      expect(ionic.off).toHaveBeenCalledWith('tap', callback, el[0]);
-    });
-    it('should ignore tap if it\'s in a button', function() {
-      var el = setup();
-      spyOn(ionic.DomUtil, 'rectContains');
-      var child = angular.element('<div class="button">');
-      el.append(child);
-      ionic.trigger('tap', { target: child[0] }, true, true);
-      expect(ionic.DomUtil.rectContains).not.toHaveBeenCalled();
-    });
-    it('should scrollTop if tap is inside headerBar', function() {
-      var el = setup();
-      spyOn(ionic.DomUtil, 'rectContains').andCallFake(function() {
-        return true;
+      it('should scrollTop if tap is inside headerBar', function() {
+        var el = setup();
+        spyOn(ionic.DomUtil, 'rectContains').andCallFake(function() {
+          return true;
+        });
+        ionic.trigger('tap', { target: el[0], touches: [{pageX:0,pageY:0}] });
+        expect(el.controller('$ionicScroll').scrollTop).toHaveBeenCalledWith(true);
       });
-      ionic.trigger('tap', { target: el[0], touches: [{pageX:0,pageY:0}] });
-      expect(el.controller('$ionicScroll').scrollTop).toHaveBeenCalledWith(true);
-    });
-    it('should not scrollTop if tap isnt inside headerBar', function() {
-      var el = setup();
-      spyOn(ionic.DomUtil, 'rectContains').andCallFake(function() {
-        return false;
+      it('should not scrollTop if tap isnt inside headerBar', function() {
+        var el = setup();
+        spyOn(ionic.DomUtil, 'rectContains').andCallFake(function() {
+          return false;
+        });
+        ionic.trigger('tap', { target: el[0], touches: [{pageX:0,pageY:0}] });
+        expect(el.controller('$ionicScroll').scrollTop).not.toHaveBeenCalled();
       });
-      ionic.trigger('tap', { target: el[0], touches: [{pageX:0,pageY:0}] });
-      expect(el.controller('$ionicScroll').scrollTop).not.toHaveBeenCalled();
     });
   });
 
   angular.forEach([{
     tag: 'ion-header-bar',
-    className: 'bar bar-header',
-    controllerBind: '$ionicHeaderBarController'
+    className: 'bar bar-header'
   }, {
     tag: 'ion-footer-bar',
-    className: 'bar bar-footer',
-    controllerBind: '$ionicFooterBarController'
+    className: 'bar bar-footer'
   }], function(data) {
     describe(data.tag, function() {
 
@@ -121,24 +121,6 @@ describe('bar directives', function() {
       it('should compile to ' + data.className, function() {
         var el = setup();
         expect(el.hasClass(data.className)).toBe(true);
-      });
-
-      it('should assign views.HeaderBar to default controllerBind', function() {
-        var el = setup();
-        expect(el.scope()[data.controllerBind] instanceof ionic.views.HeaderBar).toBe(true);
-      });
-      it('should assign views.HeaderBar to attr controllerBind', function() {
-        var el = setup('controller-bind="monkeys"');
-        expect(el.scope().monkeys instanceof ionic.views.HeaderBar).toBe(true);
-      });
-
-      it('should pass center to views.HeaderBar option by default', function() {
-        var el = setup();
-        expect(el.scope()[data.controllerBind].opts.alignTitle).toBe('center');
-      });
-      it('should pass attr.alignTitle to views.HeaderBar', function() {
-        var el = setup('align-title="left"');
-        expect(el.scope()[data.controllerBind].opts.alignTitle).toBe('left');
       });
     });
   });

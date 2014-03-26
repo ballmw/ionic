@@ -123,6 +123,11 @@
   }
 }
 
+.tabs-item-hide,
+.tabs-item-hide > .tabs {
+  display: none;
+}
+
 .tabs-icon-top .tab-item,
 .tabs-icon-bottom .tab-item {
   font-size: $tabs-text-font-size-side-icon;
@@ -181,7 +186,7 @@
 /* Navigational tab */
 
 /* Active state for tab */
-.tab-item.active {
+.tab-item.tab-item-active {
   opacity: 1;
 
   &.tab-item-light {

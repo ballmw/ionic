@@ -28,12 +28,12 @@ angular.module('ionic.ui.content', ['ionic.ui.scroll'])
  * @ngdoc directive
  * @name ionContent
  * @module ionic
- * @controller ionicScroll as $scope.$ionicScrollController
+ * @delegate ionic.service:$ionicScrollDelegate
  * @restrict E
  *
  * @description
  * The ionContent directive provides an easy to use content area that can be configured
- * to use Ionic's custom Scroll View, or the built in overflow scorlling of the browser.
+ * to use Ionic's custom Scroll View, or the built in overflow scrolling of the browser.
  *
  * While we recommend using the custom Scroll features in Ionic in most cases, sometimes
  * (for performance reasons) only the browser's native overflow scrolling will suffice,
@@ -44,9 +44,8 @@ angular.module('ionic.ui.content', ['ionic.ui.scroll'])
  * directive, and infinite scrolling with the {@link ionic.directive:ionInfiniteScroll}
  * directive.
  *
- * @param {string=} controller-bind The scope variable to bind this element's scrollView's
- * {@link ionic.controller:ionicScroll ionicScroll controller} to.
- * Default: $scope.$ionicScrollController.
+ * @param {string=} delegate-handle The handle used to identify this scrollView
+ * with {@link ionic.service:$ionicScrollDelegate}.
  * @param {boolean=} padding Whether to add padding to the content.
  * of the content.  Defaults to true on iOS, false on Android.
  * @param {boolean=} scroll Whether to allow scrolling of content.  Defaults to true.
@@ -58,11 +57,10 @@ angular.module('ionic.ui.content', ['ionic.ui.scroll'])
  * @param {expression=} on-scroll-complete Expression to evaluate when a scroll action completes.
  */
 .directive('ionContent', [
-  '$parse',
   '$timeout',
   '$controller',
   '$ionicBind',
-function($parse, $timeout, $controller, $ionicBind) {
+function($timeout, $controller, $ionicBind) {
   return {
     restrict: 'E',
     require: '^?ionNavView',
@@ -77,8 +75,6 @@ function($parse, $timeout, $controller, $ionicBind) {
 
       return { pre: prelink };
       function prelink($scope, $element, $attr, navViewCtrl) {
-        var clone, sc, scrollView, scrollCtrl;
-
         $scope.$watch(function() {
           return ($scope.$hasHeader ? ' has-header' : '')  +
             ($scope.$hasSubheader ? ' has-subheader' : '') +
@@ -117,12 +113,11 @@ function($parse, $timeout, $controller, $ionicBind) {
         } else if(attr.overflowScroll === "true") {
           $element.addClass('overflow-scroll');
         } else {
-
-          scrollCtrl = $controller('$ionicScroll', {
+          $controller('$ionicScroll', {
             $scope: $scope,
             scrollViewOptions: {
               el: $element[0],
-              controllerBind: $attr.controllerBind,
+              delegateHandle: attr.delegateHandle,
               bouncing: $scope.$eval($scope.hasBouncing),
               startX: $scope.$eval($scope.startX) || 0,
               startY: $scope.$eval($scope.startY) || 0,
@@ -139,8 +134,6 @@ function($parse, $timeout, $controller, $ionicBind) {
               }
             }
           });
-          //Publish scrollView to parent so children can access it
-          scrollView = scrollCtrl.scrollView;
         }
 
       }

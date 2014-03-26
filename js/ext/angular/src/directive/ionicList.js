@@ -20,7 +20,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
  *   <ion-item ng-repeat="item in items"
  *     item="item"
  *     can-swipe="true"
- *     left-buttons="myItemButtons">
+ *     option-buttons="myItemButtons">
  *   </ion-item>
  * </ion-list>
  * ```
@@ -36,7 +36,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
  *   ```
  *
  * @param {expression=} item The 'object' representing this item, to be passed in to swipe, delete, and reorder callbacks.
- * @param {boolean=} can-swipe Whether or not this item can be swiped. Defaults ot hte ionList parent's can-swipe setting.
+ * @param {boolean=} can-swipe Whether or not this item can be swiped. Defaults ot the ionList parent's can-swipe setting.
  * @param {boolean=} can-delete Whether or not this item can be deleted. Defaults to the ionList parent's can-delete setting.
  * @param {boolean=} can-reorder Whether or not this item can be reordered. Defaults to the ionList parent's can-reorder setting.
  * @param {expression=} on-delete The expression to call when this item is deleted.
@@ -68,7 +68,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
             </div>\
             <a class="item-content" ng-href="{{ href }}" ng-transclude></a>\
             <div class="item-right-edit item-reorder" ng-if="reorderIconClass !== undefined">\
-              <button data-ionic-action="reorder" class="button button-icon icon" ng-class="reorderIconClass"></button>\
+              <button data-ionic-action="reorder" data-prevent-scroll="true" class="button button-icon icon" ng-class="reorderIconClass"></button>\
             </div>\
             <div class="item-options" ng-if="itemOptionButtons">\
              <button ng-click="b.onTap(item, b)" ion-stop-event="click" class="button" ng-class="b.type" ng-repeat="b in itemOptionButtons" ng-bind="b.text"></button>\

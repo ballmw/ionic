@@ -4,6 +4,102 @@
 angular.module('ionic.ui.slideBox', [])
 
 /**
+ * @ngdoc service
+ * @name $ionicSlideBoxDelegate
+ * @module ionic
+ * @description
+ * Delegate that controls the {@link ionic.directive:ionSlideBox} directive.
+ *
+ * Methods called directly on the $ionicSlideBoxDelegate service will control all side
+ * menus.  Use the {@link ionic.service:$ionicSlideBoxDelegate#$getByHandle $getByHandle}
+ * method to control specific slide box instances.
+ *
+ * @usage
+ *
+ * ```html
+ * <body ng-controller="MyCtrl">
+ *   <ion-slide-box>
+ *     <ion-slide>
+ *       <div class="box blue">
+ *         <button ng-click="nextSlide()">Next slide!</button>
+ *       </div>
+ *     </ion-slide>
+ *     <ion-slide>
+ *       <div class="box red">
+ *         Slide 2!
+ *       </div>
+ *     </ion-slide>
+ *   </ion-slide-box>
+ * </body>
+ * ```
+ * ```js
+ * function MyCtrl($scope, $ionicSlideBoxDelegate) {
+ *   $scope.nextSlide = function() {
+ *     $ionicSlideBoxDelegate.next();
+ *   }
+ * }
+ * ```
+ */
+.service('$ionicSlideBoxDelegate', delegateService([
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#update
+   * @description
+   * Update the slidebox (for example if using Angular with ng-repeat,
+   * resize it for the elements inside).
+   */
+  'update',
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#slide
+   * @param {number} to The index to slide to.
+   * @param {number=} speed The number of milliseconds for the change to take.
+   */
+  'slide',
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#previous
+   * @description Go to the previous slide. Wraps around if at the beginning.
+   */
+  'previous',
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#next
+   * @description Go to the next slide. Wraps around if at the end.
+   */
+  'next',
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#stop
+   * @description Stop sliding. The slideBox will not move again until
+   * explicitly told to do so.
+   */
+  'stop',
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#currentIndex
+   * @returns number The index of the current slide.
+   */
+  'currentIndex',
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#slidesCount
+   * @returns number The number of slides there are currently.
+   */
+  'slidesCount'
+  /**
+   * @ngdoc method
+   * @name $ionicSlideBoxDelegate#$getByHandle
+   * @param {string} handle
+   * @returns `delegateInstance` A delegate instance that controls only the
+   * {@link ionic.directive:ionSlideBox} directives with `delegate-handle` matching
+   * the given handle.
+   *
+   * Example: `$ionicSlideBoxDelegate.$getByHandle('my-handle').stop();`
+   */
+]))
+
+/**
  * The internal controller for the slide box controller.
  */
 
@@ -11,8 +107,8 @@ angular.module('ionic.ui.slideBox', [])
  * @ngdoc directive
  * @name ionSlideBox
  * @module ionic
+ * @delegate ionic.service:$ionicSlideBoxDelegate
  * @restrict E
- * @controller ionicSlideBox as $scope.$ionicSlideBoxController
  * @description
  * The Slide Box is a multi-page container where each page can be swiped or dragged between:
  *
@@ -33,9 +129,8 @@ angular.module('ionic.ui.slideBox', [])
  * </ion-slide-box>
  * ```
  *
- * @param {string=} controller-bind The scope variable to bind this slide box's
- * {@link ionic.controller:ionicSlideBox ionicSlideBox controller} to.
- * Default: $scope.$ionicSlideBoxController.
+ * @param {string=} delegate-handle The handle used to identify this slideBox
+ * with {@link ionic.service:$ionicSlideBoxDelegate}.
  * @param {boolean=} does-continue Whether the slide box should automatically slide.
  * @param {number=} slide-interval How many milliseconds to wait to change slides (if does-continue is true). Defaults to 4000.
  * @param {boolean=} show-pager Whether a pager should be shown for this slide box.
@@ -43,7 +138,11 @@ angular.module('ionic.ui.slideBox', [])
  * @param {expression=} on-slide-changed Expression called whenever the slide is changed.
  * @param {expression=} active-slide Model to bind the current slide to.
  */
-.directive('ionSlideBox', ['$timeout', '$compile', function($timeout, $compile) {
+.directive('ionSlideBox', [
+  '$timeout',
+  '$compile',
+  '$ionicSlideBoxDelegate',
+function($timeout, $compile, $ionicSlideBoxDelegate) {
   return {
     restrict: 'E',
     replace: true,
@@ -56,7 +155,7 @@ angular.module('ionic.ui.slideBox', [])
       onSlideChanged: '&',
       activeSlide: '=?'
     },
-    controller: ['$scope', '$element', '$attrs', '$parse', function($scope, $element, $attrs, $parse) {
+    controller: ['$scope', '$element', '$attrs', function($scope, $element, $attrs) {
       var _this = this;
 
       var continuous = $scope.$eval($scope.doesContinue) === true;
@@ -102,7 +201,12 @@ angular.module('ionic.ui.slideBox', [])
         slider.slide(index);
       });
 
-      $parse($attrs.controllerBind || '$ionicSlideBoxController').assign($scope.$parent, slider);
+      //Exposed for testing
+      this.__slider = slider;
+
+      var deregisterInstance = $ionicSlideBoxDelegate._registerInstance(slider, $attrs.delegateHandle);
+
+      $scope.$on('$destroy', deregisterInstance);
 
       this.slidesCount = function() {
         return slider.slidesCount();

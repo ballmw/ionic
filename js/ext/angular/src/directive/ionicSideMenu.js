@@ -21,44 +21,97 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
 }])
 
 /**
- * @ngdoc controller
- * @name ionicSideMenus
+ * @ngdoc service
+ * @name $ionicSideMenuDelegate
  * @module ionic
  *
  * @description
- * Controller for the {@link ionic.directive:ionSideMenus} directive.
+ * Delegate for controlling the {@link ionic.directive:ionSideMenus} directive.
+ *
+ * Methods called directly on the $ionicSideMenuDelegate service will control all side
+ * menus.  Use the {@link ionic.service:$ionicSideMenuDelegate#$getByHandle $getByHandle}
+ * method to control specific ionSideMenus instances.
+ *
+ * @usage
+ *
+ * ```html
+ * <body ng-controller="MainCtrl">
+ *   <ion-side-menus>
+ *     <ion-pane ion-side-menu-content>
+ *       Content!
+ *       <button ng-click="toggleLeftSideMenu()">
+ *         Toggle Left Side Menu
+ *       </button>
+ *     </ion-pane>
+ *     <ion-side-menu side="left">
+ *       Left Menu!
+ *     <ion-side-menu>
+ *   </ion-side-menus>
+ * </body>
+ * ```
+ * ```js
+ * function MainCtrl($scope, $ionicSideMenuDelegate) {
+ *   $scope.toggleLeftSideMenu = function() {
+ *     $ionicSideMenuDelegate.toggleLeft();
+ *   };
+ * }
+ * ```
  */
-/**
- * @ngdoc method
- * @name ionicSideMenus#toggleLeft
- * @description Toggle the left side menu (if it exists).
- * @param {boolean=} isOpen Whether to open or close the menu.
- * Default: Toggles the menu.
- */
-/**
- * @ngdoc method
- * @name ionicSideMenus#toggleRight
- * @description Toggle the right side menu (if it exists).
- * @param {boolean=} isOpen Whether to open or close the menu.
- * Default: Toggles the menu.
- */
-/**
- * @ngdoc method
- * @name ionicSideMenus#isOpenLeft
- * @returns {boolean} Whether the left menu is currently opened.
- */
-/**
- * @ngdoc method
- * @name ionicSideMenus#isOpenRight
- * @returns {boolean} Whether the right menu is currently opened.
- */
+.service('$ionicSideMenuDelegate', delegateService([
+  /**
+   * @ngdoc method
+   * @name $ionicSideMenuDelegate#toggleLeft
+   * @description Toggle the left side menu (if it exists).
+   * @param {boolean=} isOpen Whether to open or close the menu.
+   * Default: Toggles the menu.
+   */
+  'toggleLeft',
+  /**
+   * @ngdoc method
+   * @name $ionicSideMenuDelegate#toggleRight
+   * @description Toggle the right side menu (if it exists).
+   * @param {boolean=} isOpen Whether to open or close the menu.
+   * Default: Toggles the menu.
+   */
+  'toggleRight',
+  /**
+   * @ngdoc method
+   * @name $ionicSideMenuDelegate#isOpenLeft
+   * @returns {boolean} Whether the left menu is currently opened.
+   */
+  'isOpenLeft',
+  /**
+   * @ngdoc method
+   * @name $ionicSideMenuDelegate#isOpenRight
+   * @returns {boolean} Whether the right menu is currently opened.
+   */
+  'isOpenRight',
+  /**
+   * @ngdoc method
+   * @name $ionicSideMenuDelegate#canDragContent
+   * @param {boolean=} canDrag Set whether the content can or cannot be dragged to open
+   * side menus.
+   * @returns {boolean} Whether the content can be dragged to open side menus.
+   */
+  'canDragContent',
+  /**
+   * @ngdoc method
+   * @name $ionicSideMenuDelegate#$getByHandle
+   * @param {string} handle
+   * @returns `delegateInstance` A delegate instance that controls only the
+   * {@link ionic.directive:ionSideMenus} directives with `delegate-handle` matching
+   * the given handle.
+   *
+   * Example: `$ionicSideMenuDelegate.$getByHandle('my-handle').toggleLeft();`
+   */
+]))
 
 /**
  * @ngdoc directive
  * @name ionSideMenus
  * @module ionic
+ * @delegate ionic.service:$ionicSideMenuDelegate
  * @restrict E
- * @controller ionicSideMenus as $scope.$ionicSideMenusController
  *
  * @description
  * A container element for side menu(s) and the main content. Allows the left
@@ -73,14 +126,14 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
  *
  * @usage
  * To use side menus, add an `<ion-side-menus>` parent element,
- * an `<ion-pane ion-side-menu-content>` for the center content,
+ * an `<ion-side-menu-content>` for the center content,
  * and one or more `<ion-side-menu>` directives.
  *
  * ```html
  * <ion-side-menus>
  *   <!-- Center content -->
- *   <ion-pane ion-side-menu-content ng-controller="ContentController">
- *   </ion-pane>
+ *   <ion-side-menu-content ng-controller="ContentController">
+ *   </io-side-menu-content>
  *
  *   <!-- Left menu -->
  *   <ion-side-menu side="left">
@@ -92,22 +145,21 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
  * </ion-side-menus>
  * ```
  * ```js
- * function ContentController($scope) {
+ * function ContentController($scope, $ionicSideMenuDelegate) {
  *   $scope.toggleLeft = function() {
- *     $scope.$ionicSideMenusController.toggleLeft();
+ *     $ionicSideMenuDelegate.toggleLeft();
  *   };
  * }
  * ```
  *
- * @param {string=} controller-bind The scope variable to bind these side menus'
- * {@link ionic.controller:ionicSideMenus ionicSideMenus controller} to.
- * Default: $scope.$ionicSideMenusController.
+ * @param {string=} delegate-handle The handle used to identify this side menu
+ * with {@link ionic.service:$ionicSideMenuDelegate}.
  *
  */
 .directive('ionSideMenus', function() {
   return {
     restrict: 'ECA',
-    controller: ['$scope', '$attrs', '$parse', function($scope, $attrs, $parse) {
+    controller: ['$scope', '$attrs', '$ionicSideMenuDelegate', function($scope, $attrs, $ionicSideMenuDelegate) {
       var _this = this;
 
       angular.extend(this, ionic.controllers.SideMenuController.prototype);
@@ -117,10 +169,20 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
         right: { width: 275 }
       });
 
+      this.canDragContent = function(canDrag) {
+        if (arguments.length) {
+          $scope.dragContent = !!canDrag;
+        }
+        return $scope.dragContent;
+      };
+
       $scope.sideMenuContentTranslateX = 0;
 
-      $parse($attrs.controllerBind || '$ionicSideMenusController')
-        .assign($scope, this);
+      var deregisterInstance = $ionicSideMenuDelegate._registerInstance(
+        this, $attrs.delegateHandle
+      );
+
+      $scope.$on('$destroy', deregisterInstance);
     }],
     replace: true,
     transclude: true,
@@ -132,20 +194,18 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
  * @ngdoc directive
  * @name ionSideMenuContent
  * @module ionic
- * @restrict A
+ * @restrict E
  * @parent ionic.directive:ionSideMenus
  *
  * @description
  * A container for the main visible content, sibling to one or more
  * {@link ionic.directive:ionSideMenu} directives.
  *
- * An attribute directive, recommended to be used as part of an `<ion-pane>` element.
- *
  * @usage
  * ```html
- * <div ion-side-menu-content
- *   drag-content="canDragContent()">
- * </div>
+ * <ion-side-menu-content
+ *   drag-content="canDrag">
+ * </ion-side-menu-content>
  * ```
  * For a complete side menu example, see the
  * {@link ionic.directive:ionSideMenus} documentation.
@@ -155,21 +215,21 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
  */
 .directive('ionSideMenuContent', ['$timeout', '$ionicGesture', function($timeout, $ionicGesture) {
   return {
-    restrict: 'AC',
+    restrict: 'EA', //DEPRECATED 'A'
     require: '^ionSideMenus',
     scope: true,
     compile: function(element, attr) {
       return { pre: prelink };
       function prelink($scope, $element, $attr, sideMenuCtrl) {
 
-        $element.addClass('menu-content');
+        $element.addClass('menu-content pane');
 
         if (angular.isDefined(attr.dragContent)) {
           $scope.$watch(attr.dragContent, function(value) {
-            $scope.dragContent = value;
+            sideMenuCtrl.canDragContent(value);
           });
         } else {
-          $scope.dragContent = true;
+          sideMenuCtrl.canDragContent(true);
         }
 
         var defaultPrevented = false;
@@ -314,6 +374,44 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
   };
 })
 
+/**
+ * @ngdoc directive
+ * @name menuToggle
+ * @module ionic
+ * @restrict AC
+ *
+ * @description
+ * Toggle a side menu on the given side
+ *
+ * @usage
+ * Below is an example of a link within a nav bar. Tapping this link would
+ * automatically open the given side menu
+ *
+ * ```html
+ * <ion-view>
+ *   <ion-nav-buttons side="left">
+ *    <button menu-toggle="left" class="button button-icon icon ion-navicon"></button>
+ *   </ion-nav-buttons>
+ *  ...
+ * </ion-view>
+ * ```
+ */
+.directive('menuToggle', ['$ionicViewService', function($ionicViewService) {
+  return {
+    restrict: 'AC',
+    require: '^ionSideMenus',
+    link: function($scope, $element, $attr, sideMenuCtrl) {
+      var side = $scope.$eval($attr.menuToggle) || 'left';
+      $element.bind('click', function(){
+        if(side === 'left') {
+          sideMenuCtrl.toggleLeft();
+        } else if(side === 'right') {
+          sideMenuCtrl.toggleRight();
+        }
+      });
+    }
+  };
+}])
 
 /**
  * @ngdoc directive

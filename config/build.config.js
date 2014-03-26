@@ -23,6 +23,8 @@ module.exports = {
     ' * ionic.js, angular.js, angular-animate.js,\n'+
     ' * angular-ui-router.js, and ionic-angular.js\n'+
     ' */\n\n',
+  closureStart: '(function() {\n',
+  closureEnd: '\n})();',
 
   ionicFiles: [
     // Base

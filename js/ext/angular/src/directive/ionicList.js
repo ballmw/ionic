@@ -20,7 +20,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
  *   <ion-item ng-repeat="item in items"
  *     item="item"
  *     can-swipe="true"
- *     option-buttons="myItemButtons">
+ *     option-buttons="itemButtons">
  *   </ion-item>
  * </ion-list>
  * ```
@@ -28,11 +28,22 @@ angular.module('ionic.ui.list', ['ngAnimate'])
  * @param {string=} item-type The type of this item.  See [the list CSS page](/docs/components/#list) for available item types.
  * @param {expression=} option-buttons The option buttons to show when swiping the item to the left (if swiping is enabled).  Defaults to the ionList parent's option-buttons setting.  The format of each button object is:
  *   ```js
- *   {
- *     text: 'Edit',
- *     type: 'Button',
- *     onTap: function(item) {}
- *   }
+ *   $scope.itemButtons = [
+ *      {
+ *        text: 'Edit',
+ *        type: 'Button',
+ *        onTap: function(item) {
+ *          alert('Edit Item: ' + item.id);
+ *        }
+ *      },
+ *      {
+ *        text: 'Share',
+ *        type: 'Button',
+ *        onTap: function(item) {
+ *          alert('Share Item: ' + item.id);
+ *        }
+ *      }
+ *   ];
  *   ```
  *
  * @param {expression=} item The 'object' representing this item, to be passed in to swipe, delete, and reorder callbacks.
@@ -183,7 +194,7 @@ angular.module('ionic.ui.list', ['ngAnimate'])
  * @param {boolean=} can-swipe Whether child items can be swiped to reveal option buttons.
  * @param {string=} delete-icon The class name of the icon to show on child items while deleting.  Defaults to `ion-minus-circled`.
  * @param {string=} reorder-icon The class name to show on child items while reordering. Defaults to `ion-navicon`.
- * @param {string=} animation An animation class to apply to the list for animating when child items enter or exit the list.
+ * @param {string=} animation An animation class to apply to the list for animating when child items enter or exit the list. See [the animation CSS page](/docs/components/#animations) for available animation classes.
  */
 .directive('ionList', ['$timeout', function($timeout) {
   return {

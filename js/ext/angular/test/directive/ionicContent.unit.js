@@ -45,29 +45,64 @@ describe('Ionic Content directive', function() {
     }).join('');
     var className = 'has-'+type;
 
-    it('should has-' + type + ' when ' + scopeVar + ' == true', function() {
+    it('should has-' + type + ' when $parent.' + scopeVar + ' == true', function() {
       var element = compile('<ion-content>')(scope.$new());
       scope = element.scope();
 
       expect(element.hasClass(className)).toBe(false);
       expect(scope[scopeVar]).toBeFalsy();
 
-      scope.$apply(scopeVar + ' = true');
+      scope.$apply('$parent.' + scopeVar + ' = true');
       expect(element.hasClass(className)).toBe(true);
 
-      scope.$apply(scopeVar + ' = false');
+      scope.$apply('$parent.' + scopeVar + ' = false');
       expect(element.hasClass(className)).toBe(false);
+    });
+
+    it('should set $scope.' + scopeVar + ' to false on the ionContent element child scope, to stop inheritance of the has* classes', function() {
+      var compileScope = scope.$new();
+      compileScope[scopeVar] = true;
+      var element = compile('<ion-content>')(compileScope);
+      expect(compileScope[scopeVar]).toBe(true);
+      expect(element.scope()[scopeVar]).toBe(false);
     });
   });
 
-  it('should add padding classname', function() {
+  it('should have no scroll element when scroll="false"', function() {
+    var element = compile('<ion-content scroll="false"></ion-content>')(scope);
+    var scroll = element.find('.scroll');
+
+    expect(scroll.length).toBe(0);
+  });
+
+  it('should add padding classname to scroll element', function() {
     var element = compile('<ion-content padding="shouldPad"></ion-content>')(scope);
-    var scrollElement = element.find('.scroll');
-    expect(scrollElement.hasClass('padding')).toEqual(false);
+    var scroll = element.find('.scroll');
+
+    // by default, ion-content should have a scroll element, and the scroll element should not be padded
+    expect(scroll.hasClass('padding')).toEqual(false);
+    expect(element.hasClass('padding')).toEqual(false);
+
     element.scope().$apply('shouldPad = true');
-    expect(scrollElement.hasClass('padding')).toEqual(true);
+    expect(scroll.hasClass('padding')).toEqual(true);
+    expect(element.hasClass('padding')).toEqual(false);
+
     element.scope().$apply('shouldPad = false');
-    expect(scrollElement.hasClass('padding')).toEqual(false);
+    expect(scroll.hasClass('padding')).toEqual(false);
+    expect(element.hasClass('padding')).toEqual(false);
+
+  });
+
+  // keep scroll=false && padding tests separate as we don't handle a recompile yet when scroll changes.
+  it('should add padding classname to scroll-content element', function() {
+    var element = compile('<ion-content padding="shouldPad" scroll="false"></ion-content>')(scope);
+
+    // when ion-content is not scrollable, there will be no scroll element, the padding should be added to ion-content itself.
+    element.scope().$apply('shouldPad = false');
+    expect(element.hasClass('padding')).toEqual(false);
+
+    element.scope().$apply('shouldPad = true');
+    expect(element.hasClass('padding')).toEqual(true);
   });
 
   it('Should set start x and y', function() {

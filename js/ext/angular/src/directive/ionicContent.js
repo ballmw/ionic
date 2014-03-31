@@ -66,26 +66,38 @@ function($timeout, $controller, $ionicBind) {
     require: '^?ionNavView',
     scope: true,
     compile: function(element, attr) {
+      var innerElement;
+
       element.addClass('scroll-content');
 
-      //We cannot transclude here because it breaks element.data() inheritance on compile
-      var innerElement = angular.element('<div class="scroll"></div>');
-      innerElement.append(element.contents());
-      element.append(innerElement);
+      if (attr.scroll != 'false') {
+        //We cannot use normal transclude here because it breaks element.data()
+        //inheritance on compile
+        innerElement = angular.element('<div class="scroll"></div>');
+        innerElement.append(element.contents());
+        element.append(innerElement);
+      }
 
       return { pre: prelink };
       function prelink($scope, $element, $attr, navViewCtrl) {
+        var parentScope = $scope.$parent;
         $scope.$watch(function() {
-          return ($scope.$hasHeader ? ' has-header' : '')  +
-            ($scope.$hasSubheader ? ' has-subheader' : '') +
-            ($scope.$hasFooter ? ' has-footer' : '') +
-            ($scope.$hasSubfooter ? ' has-subfooter' : '') +
-            ($scope.$hasTabs ? ' has-tabs' : '') +
-            ($scope.$hasTabsTop ? ' has-tabs-top' : '');
+          return (parentScope.$hasHeader ? ' has-header' : '')  +
+            (parentScope.$hasSubheader ? ' has-subheader' : '') +
+            (parentScope.$hasFooter ? ' has-footer' : '') +
+            (parentScope.$hasSubfooter ? ' has-subfooter' : '') +
+            (parentScope.$hasTabs ? ' has-tabs' : '') +
+            (parentScope.$hasTabsTop ? ' has-tabs-top' : '');
         }, function(className, oldClassName) {
           $element.removeClass(oldClassName);
           $element.addClass(className);
         });
+
+        //Only this ionContent should use these variables from parent scopes
+        $scope.$hasHeader = $scope.$hasSubheader =
+          $scope.$hasFooter = $scope.$hasSubfooter =
+          $scope.$hasTabs = $scope.$hasTabsTop =
+          false;
 
         $ionicBind($scope, $attr, {
           $onScroll: '&onScroll',
@@ -104,7 +116,7 @@ function($timeout, $controller, $ionicBind) {
 
         if (angular.isDefined($attr.padding)) {
           $scope.$watch($attr.padding, function(newVal) {
-            innerElement.toggleClass('padding', !!newVal);
+              (innerElement || $element).toggleClass('padding', !!newVal);
           });
         }
 
@@ -174,11 +186,14 @@ function($timeout, $controller, $ionicBind) {
  * .controller('MyController', function($scope, $http) {
  *   $scope.items = [1,2,3];
  *   $scope.doRefresh = function() {
- *     $http.get('/new-items').success(function(newItems) {
- *       $scope.items = newItems;
- *       //Stop the ion-refresher from spinning
- *       $scope.$broadcast('scroll.refreshComplete');
- *     });
+ *     $http.get('/new-items')
+ *      .success(function(newItems) {
+ *        $scope.items = newItems;
+ *      })
+ *      .finally(function() {
+ *        // Stop the ion-refresher from spinning
+ *        $scope.$broadcast('scroll.refreshComplete');
+ *      });
  *   };
  * });
  * ```
@@ -203,11 +218,11 @@ function($timeout, $controller, $ionicBind) {
     require: '^$ionicScroll',
     template:
     '<div class="scroll-refresher">' +
-    '<div class="ionic-refresher-content">' +
+      '<div class="ionic-refresher-content">' +
         '<i class="icon {{pullingIcon}} icon-pulling"></i>' +
-        '<span class="icon-pulling" ng-bind-html="pullingText"></span>' +
+        '<div class="text-pulling" ng-bind-html="pullingText"></div>' +
         '<i class="icon {{refreshingIcon}} icon-refreshing"></i>' +
-        '<span class="icon-refreshing" ng-bind-html="refreshingText"></span>' +
+        '<div class="text-refreshing" ng-bind-html="refreshingText"></div>' +
       '</div>' +
     '</div>',
     compile: function($element, $attrs) {

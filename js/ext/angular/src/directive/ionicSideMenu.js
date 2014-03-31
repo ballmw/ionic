@@ -37,12 +37,12 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
  * ```html
  * <body ng-controller="MainCtrl">
  *   <ion-side-menus>
- *     <ion-pane ion-side-menu-content>
+ *     <ion-side-menu-content>
  *       Content!
  *       <button ng-click="toggleLeftSideMenu()">
  *         Toggle Left Side Menu
  *       </button>
- *     </ion-pane>
+ *     </ion-side-menu-content>
  *     <ion-side-menu side="left">
  *       Left Menu!
  *     <ion-side-menu>
@@ -74,6 +74,17 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
    * Default: Toggles the menu.
    */
   'toggleRight',
+  /**
+   * @ngdoc method
+   * @name $ionicSideMenuDelegate#getOpenRatio
+   * @description Gets the ratio of open amount over menu width. For example, a
+   * menu of width 100 that is opened by 50 pixels is 50% opened, and would return
+   * a ratio of 0.5. 
+   *
+   * @returns {float} 0 if nothing is open, between 0 and 1 if left menu is 
+   * opened/opening, and between 0 and -1 if right menu is opened/opening.
+   */
+  'getOpenRatio',
   /**
    * @ngdoc method
    * @name $ionicSideMenuDelegate#isOpenLeft
@@ -133,7 +144,7 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
  * <ion-side-menus>
  *   <!-- Center content -->
  *   <ion-side-menu-content ng-controller="ContentController">
- *   </io-side-menu-content>
+ *   </ion-side-menu-content>
  *
  *   <!-- Left menu -->
  *   <ion-side-menu side="left">
@@ -204,13 +215,13 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
  * @usage
  * ```html
  * <ion-side-menu-content
- *   drag-content="canDrag">
+ *   drag-content="true">
  * </ion-side-menu-content>
  * ```
  * For a complete side menu example, see the
  * {@link ionic.directive:ionSideMenus} documentation.
  *
- * @param {boolean=} drag-content Whether the content can be dragged.
+ * @param {boolean=} drag-content Whether the content can be dragged. Defaul true.
  *
  */
 .directive('ionSideMenuContent', ['$timeout', '$ionicGesture', function($timeout, $ionicGesture) {
@@ -401,7 +412,7 @@ angular.module('ionic.ui.sideMenu', ['ionic.service.gesture', 'ionic.service.vie
     restrict: 'AC',
     require: '^ionSideMenus',
     link: function($scope, $element, $attr, sideMenuCtrl) {
-      var side = $scope.$eval($attr.menuToggle) || 'left';
+      var side = $attr.menuToggle || 'left';
       $element.bind('click', function(){
         if(side === 'left') {
           sideMenuCtrl.toggleLeft();

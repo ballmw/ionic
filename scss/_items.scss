@@ -101,8 +101,10 @@
 }
 
 // Link and Button Active States
-.item.active:not(.item-divider):not(.item-input):not(.item-input-inset),
-.item-complex.active .item-content {
+.item.active,
+.item.activated,
+.item-complex.active .item-content,
+.item-complex.activated .item-content {
   @include item-active-style($item-default-active-bg, $item-default-active-border);
 
   // Different active themes for <a> and <button> items
@@ -292,7 +294,8 @@ a.item-content {
 .item-icon-left.item-icon-right .icon:first-child {
   right: auto;
 }
-.item-icon-left.item-icon-right .icon:last-child {
+.item-icon-left.item-icon-right .icon:last-child,
+.item-icon-left .item-delete .icon {
   left: auto;
 }
 

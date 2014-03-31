@@ -1,4 +1,4 @@
-<a href="https://travis-ci.org/driftyco/ionic"><img src="https://travis-ci.org/driftyco/ionic.png?branch=master" data-bindattr-164="164" title="Build Status Images"></a>
+<a href="https://travis-ci.org/driftyco/ionic"><img src="https://travis-ci.org/driftyco/ionic.svg?branch=master" data-bindattr-164="164" title="Build Status Images"></a>
 
 The best place to start with Ionic is our [documentation page](http://ionicframework.com/docs/).
 
@@ -87,6 +87,7 @@ For most cases, you'll need AngularJS as well.  This is bundled in `js/angular/`
 ## Development
 
 * `npm install && npm install -g gulp protractor` to setup
+* (if you wish to run end-to-end tests): `webdriver-manager update --chrome` to install the webdriver.
 * `gulp` or `gulp build` to build
 * `gulp docs` to generate docs (read Documentation below for how to test docs locally).
 * `gulp build --release` to build with minification & strip debugs

@@ -8,10 +8,11 @@ angular.module('ionic.ui.radio', [])
  * @name ionRadio
  * @module ionic
  * @restrict E
+ * @codepen saoBG
  * @description
- * No different than the HTML radio input, except it's styled differently.
+ * The radio directive is no different than the HTML radio input, except it's styled differently.
  *
- * Behaves like any [AngularJS radio](http://docs.angularjs.org/api/ng/input/input[radio]).
+ * Radio behaves like any [AngularJS radio](http://docs.angularjs.org/api/ng/input/input[radio]).
  *
  * @usage
  * ```html

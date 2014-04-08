@@ -214,7 +214,8 @@ angular.module('ionic.ui.tabs', ['ionic.service.view'])
     controller: 'ionicTabs',
     compile: function(element, attr) {
       element.addClass('view');
-      //We cannot transclude here because it breaks element.data() inheritance on compile
+      //We cannot use regular transclude here because it breaks element.data()
+      //inheritance on compile
       var innerElement = angular.element('<div class="tabs"></div>');
       innerElement.append(element.contents());
       element.append(innerElement);
@@ -246,9 +247,26 @@ angular.module('ionic.ui.tabs', ['ionic.service.view'])
   };
 }])
 
-.controller('ionicTab', ['$scope', '$ionicViewService', '$rootScope', '$element',
-function($scope, $ionicViewService, $rootScope, $element) {
+.controller('ionicTab', ['$scope', '$ionicViewService', '$attrs', '$location', '$state',
+function($scope, $ionicViewService, $attrs, $location, $state) {
   this.$scope = $scope;
+
+  //All of these exposed for testing
+  this.hrefMatchesState = function() {
+    return $attrs.href && $location.path().indexOf(
+      $attrs.href.replace(/^#/, '').replace(/\/$/, '')
+    ) === 0;
+  };
+  this.srefMatchesState = function() {
+    return $attrs.uiSref && $state.includes( $attrs.uiSref.split('(')[0] );
+  };
+  this.navNameMatchesState = function() {
+    return this.navViewName && $ionicViewService.isCurrentStateNavView(this.navViewName);
+  };
+
+  this.tabMatchesState = function() {
+    return this.hrefMatchesState() || this.srefMatchesState() || this.navNameMatchesState();
+  };
 }])
 
 /**
@@ -286,8 +304,8 @@ function($scope, $ionicViewService, $rootScope, $element) {
  * @param {expression=} on-deselect Called when this tab is deselected.
  * @param {expression=} ng-click By default, the tab will be selected on click. If ngClick is set, it will not.  You can explicitly switch tabs using {@link ionic.service:$ionicTabsDelegate#select $ionicTabsDelegate.select()}.
  */
-.directive('ionTab', ['$rootScope', '$animate', '$ionicBind', '$compile', '$ionicViewService',
-function($rootScope, $animate, $ionicBind, $compile, $ionicViewService) {
+.directive('ionTab', ['$rootScope', '$animate', '$ionicBind', '$compile', '$ionicViewService', '$state', '$location',
+function($rootScope, $animate, $ionicBind, $compile, $ionicViewService, $state, $location) {
 
   //Returns ' key="value"' if value exists
   function attrStr(k,v) {
@@ -300,26 +318,36 @@ function($rootScope, $animate, $ionicBind, $compile, $ionicViewService) {
     controller: 'ionicTab',
     scope: true,
     compile: function(element, attr) {
-      //Do we have a navView?
       var navView = element[0].querySelector('ion-nav-view') ||
         element[0].querySelector('data-ion-nav-view');
       var navViewName = navView && navView.getAttribute('name');
 
-      var tabNavItem = angular.element(
-        element[0].querySelector('ion-tab-nav') ||
-        element[0].querySelector('data-ion-tab-nav')
-      ).remove();
+
+      //We create the tabNavElement in the compile phase so that the
+      //attributes we pass down won't be interpolated yet - we want
+      //to pass down the 'raw' versions of the attributes
+      var tabNavElement = angular.element(
+        '<ion-tab-nav' +
+        attrStr('ng-click', attr.ngClick) +
+        attrStr('title', attr.title) +
+        attrStr('icon', attr.icon) +
+        attrStr('icon-on', attr.iconOn) +
+        attrStr('icon-off', attr.iconOff) +
+        attrStr('badge', attr.badge) +
+        attrStr('badge-style', attr.badgeStyle) +
+        '></ion-tab-nav>'
+      );
 
       //Remove the contents of the element so we can compile them later, if tab is selected
+      //We don't use regular transclusion because it breaks element inheritance
       var tabContent = angular.element('<div class="pane">')
         .append( element.contents().remove() );
-      return function link($scope, $element, $attr, ctrls) {
-        var childScope, childElement, tabNavElement;
-          tabsCtrl = ctrls[0],
-          tabCtrl = ctrls[1];
 
-        //Remove title attribute so browser-tooltip does not apear
-        $element[0].removeAttribute('title');
+      return function link($scope, $element, $attr, ctrls) {
+        var childScope;
+        var childElement;
+        var tabsCtrl = ctrls[0];
+        var tabCtrl = ctrls[1];
 
         $ionicBind($scope, $attr, {
           animate: '=',
@@ -337,23 +365,20 @@ function($rootScope, $animate, $ionicBind, $compile, $ionicViewService) {
           tabNavElement.remove();
         });
 
+        //Remove title attribute so browser-tooltip does not apear
+        $element[0].removeAttribute('title');
+
         if (navViewName) {
-          $scope.navViewName = navViewName;
-          $scope.$on('$stateChangeSuccess', selectTabIfMatchesState);
-          selectTabIfMatchesState();
+          tabCtrl.navViewName = navViewName;
+        }
+        $scope.$on('$stateChangeSuccess', selectIfMatchesState);
+        selectIfMatchesState();
+        function selectIfMatchesState() {
+          if (tabCtrl.tabMatchesState()) {
+            tabsCtrl.select($scope);
+          }
         }
 
-        tabNavElement = angular.element(
-          '<ion-tab-nav' +
-          attrStr('ng-click', attr.ngClick) +
-          attrStr('title', attr.title) +
-          attrStr('icon', attr.icon) +
-          attrStr('icon-on', attr.iconOn) +
-          attrStr('icon-off', attr.iconOff) +
-          attrStr('badge', attr.badge) +
-          attrStr('badge-style', attr.badgeStyle) +
-          '></ion-tab-nav>'
-        );
         tabNavElement.data('$ionTabsController', tabsCtrl);
         tabNavElement.data('$ionTabController', tabCtrl);
         tabsCtrl.$tabsElement.append($compile(tabNavElement)($scope));
@@ -371,12 +396,6 @@ function($rootScope, $animate, $ionicBind, $compile, $ionicViewService) {
           }
         });
 
-        function selectTabIfMatchesState() {
-          // this tab's ui-view is the current one, go to it!
-          if ($ionicViewService.isCurrentStateNavView($scope.navViewName)) {
-            tabsCtrl.select($scope);
-          }
-        }
       };
     }
   };

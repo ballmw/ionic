@@ -300,6 +300,18 @@ a.item-content {
   left: auto;
 }
 
+.item-icon-left .icon-accessory,
+.item-icon-right .icon-accessory {
+  color: $item-icon-accessory-color;
+  font-size: $item-icon-accessory-font-size;
+}
+.item-icon-left .icon-accessory {
+  left: round($item-padding / 5);
+}
+.item-icon-right .icon-accessory {
+  right: round($item-padding / 5);
+}
+
 
 /**
  * Item Button
@@ -375,69 +387,13 @@ button.item.item-button-right {
 }
 
 
-/**
- * Auto Right Arrow Icon
- * --------------------------------------------------
- * By default, if an .item is created out of an <a> or <button>
- * then a arrow will be added to the right side of the item.
- */
-
-a.item,
-button.item,
-.item[href] .item-content,
-.item[ng-click] .item-content {
-  padding-right: (($item-padding * 3) - 5);
-
-  &:after {
-    // By default, both <a> and <button> have right side arrow icons
-    @include display-flex();
-    @include align-items(center);
-    @include font-smoothing(antialiased);
-    position: absolute;
-    top: 0;
-    right: $item-padding - 4;
-    height: 100%;
-    color: #ccc;
-    content: "\f125"; // ion-chevron-right
-    text-transform: none;
-    font-weight: normal;
-    font-style: normal;
-    font-variant: normal;
-    font-size: 16px;
-    font-family: 'Ionicons';
-    line-height: 1;
-    speak: none;
-  }
-}
-
-.grade-b,
-.grade-c {
-  a.item:after,
-  button.item:after,
-  .item[href] .item-content:after,
-  .item[ng-click] .item-content:after {
-    // override Ionicon arrow with boring character for low end devices
-    @include font-smoothing(none);
-    content: '>';
-    font-family: 'monospace';
-  }
-}
-
-// do not show the default right arrow when they want their own right side icon
-a.item-icon-right:after,
-button.item-icon-right:after,
-a.item-button-right:after,
-button.item-button-right:after,
-.item a.item-content:after {
-  display: none;
-}
-
-
 // Item Avatar
 // -------------------------------
 
 .item-avatar,
-.item-avatar .item-content {
+.item-avatar .item-content,
+.item-avatar-left,
+.item-avatar-left .item-content {
   padding-left: $item-avatar-width + ($item-padding * 2);
   min-height: $item-avatar-width + ($item-padding * 2);
 
@@ -473,6 +429,7 @@ button.item-button-right:after,
   }
 }
 .item-avatar.item-complex,
+.item-avatar-left.item-complex,
 .item-thumbnail-left.item-complex {
   padding-left: 0;
 }
@@ -606,7 +563,6 @@ button.item-button-right:after,
   width: $item-left-edit-open-width;
   height: 100%;
   line-height: 100%;
-  opacity: 0;
 
   .button {
     height: 100%;
@@ -624,7 +580,6 @@ button.item-button-right:after,
 .list-left-editing .item-left-edit,
 .item-left-editing .item-left-edit {
   @include translate3d($item-left-edit-left, 0, 0);
-  opacity: 1;
 }
 
 
@@ -645,6 +600,7 @@ button.item-button-right:after,
 // -------------------------------
 
 .item-right-edit {
+  @include transition(all $item-edit-transition-function $item-edit-transition-duration);
   position: absolute;
   top: 0;
   right: 0;
@@ -680,6 +636,8 @@ button.item-button-right:after,
 .item-reordering {
   // item is actively being reordered
   position: absolute;
+  left: 0;
+  top: 0;
   z-index: $z-index-item-reordering;
   width: 100%;
   box-shadow: 0px 0px 10px 0px #aaa;
@@ -692,6 +650,18 @@ button.item-button-right:after,
 .item-placeholder {
   // placeholder for the item that's being reordered
   opacity: 0.7;
+}
+
+.item-left-edit.item-delete,
+.item-right-edit.item-reorder {
+  opacity: 1;
+  &.ng-hide {
+    opacity: 0;
+  }
+  &.ng-hide-add,
+  &.ng-hide-remove {
+    display: block !important;
+  }
 }
 
 
@@ -711,8 +681,4 @@ button.item-button-right:after,
     border: none;
     border-radius: 0;
   }
-}
-
-.item-options-hide .item-options {
-  display: none;
 }

@@ -298,16 +298,36 @@ angular.module('ionic.ui.viewState', ['ionic.service.view', 'ionic.service.gestu
  * <a nav-clear menu-close href="#/home" class="item">Home</a>
  * ```
  */
-.directive('navClear', ['$ionicViewService', function($ionicViewService) {
+.directive('navClear', [
+  '$ionicViewService',
+  '$state',
+  '$location',
+  '$window',
+  '$rootScope',
+function($ionicViewService, $location, $state, $window, $rootScope) {
+  $rootScope.$on('$stateChangeError', function() {
+    $ionicViewService.nextViewOptions(null);
+  });
   return {
+    priority: 100,
     restrict: 'AC',
-    link: function($scope, $element, $attr) {
-      $element.bind('click', function(){
-        $ionicViewService.nextViewOptions({
-          disableAnimate: true,
-          disableBack: true
-        });
-      });
+    compile: function($element) {
+      return { pre: prelink };
+      function prelink($scope, $element, $attrs) {
+        var unregisterListener;
+        function listenForStateChange() {
+          unregisterListener = $scope.$on('$stateChangeStart', function() {
+            $ionicViewService.nextViewOptions({
+              disableAnimate: true,
+              disableBack: true
+            });
+            unregisterListener();
+          });
+          $window.setTimeout(unregisterListener, 300);
+        }
+
+        $element.on('click', listenForStateChange);
+      }
     }
   };
 }]);

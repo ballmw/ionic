@@ -289,6 +289,9 @@ $item-button-line-height:         32px !default;
 $item-icon-font-size:             32px !default;
 $item-icon-fill-font-size:        28px !default;
 
+$item-icon-accessory-color:       #ccc !default;
+$item-icon-accessory-font-size:   16px !default;
+
 $item-avatar-width:               40px !default;
 $item-avatar-height:              40px !default;
 
@@ -671,3 +674,7 @@ $z-index-slider-pager:            1 !default;
 $z-index-tabs:                    5 !default;
 $z-index-view:                    1 !default;
 
+// Platform
+// -------------------------------
+
+$ios7-statusbar-height:           20px !default;

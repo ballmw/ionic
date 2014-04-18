@@ -93,6 +93,11 @@ function run {
     ./scripts/site/publish.sh --action="clone"
 
     VERSION_NAME="nightly"
+
+    gulp changelog --no-prepend \
+      --html=true \
+      --subtitle="(changes since $OLD_VERSION)" \
+      --dest="dist/CHANGELOG.html"
   fi
 
   ./scripts/site/publish.sh \

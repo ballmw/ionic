@@ -1,12 +1,14 @@
-<a href="https://travis-ci.org/driftyco/ionic"><img src="https://travis-ci.org/driftyco/ionic.svg?branch=master" data-bindattr-164="164" title="Build Status Images"></a>
+<a href="https://travis-ci.org/driftyco/ionic"><img src="http://img.shields.io/travis/driftyco/ionic.svg?style=flat" data-bindattr-164="164" title="Build Status Images"></a>
+
+[![Issues Ready](https://badge.waffle.io/driftyco/ionic.png?label=ready&title=Ready)](https://waffle.io/driftyco/ionic)
 
 The best place to start with Ionic is our [documentation page](http://ionicframework.com/docs/).
 
-Note: Ionic currently best supports iOS 6+ and Android 4.1+, with limited support for Android 2.3. Ionic is changing quickly as we work towards the beta.
+Ionic currently best supports iOS 6+ and Android 4.1+, with scaled-down support for Android 2.3.
 
 # What is Ionic?
 
-Ionic is the open source HTML5 Mobile Framework for building amazing, cross-platform hybrid native apps with HTML, JavaScript, and CSS. Just like this one:
+Ionic is the open source HTML5 Mobile Framework for building amazing, cross-platform hybrid native apps with HTML, JavaScript, and CSS.
 
 ![Ionic GUI](http://ionicframework.com/img/gui_screen.jpg)
 
@@ -117,9 +119,9 @@ For most cases, you'll need AngularJS as well.  This is bundled in `js/angular/`
 - Almost all of the logic for releasing Ionic is done on the Travis server
 - To push a new release:
   1. Update package.json version to new version
-  2. Update package.json codename to new codename
-  3. Generate changelog with `gulp changelog` and make sure it is OK
-  4. Commit these and push to master
+  2. Generate changelog with `gulp changelog` 
+  3. Go through the changelog, and fix any mistakes or clarify any unclear commit messages
+  4. Commit package.json and CHANGELOG.md and push to master
 - Travis will detect that this commit changed the version in package.json and push out all necessary for this new release (tags, release files, site config, ...)
 
 ## LICENSE

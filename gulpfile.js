@@ -1,4 +1,6 @@
 var gulp = require('gulp');
+var karma = require('karma').server;
+var path = require('canonical-path');
 var pkg = require('./package.json');
 var semver = require('semver');
 var through = require('through');
@@ -46,8 +48,13 @@ if (IS_RELEASE_BUILD) {
   );
 }
 
+if (argv.dist) {
+  buildConfig.dist = argv.dist;
+}
+
 gulp.task('default', ['build']);
 gulp.task('build', ['bundle', 'sass']);
+gulp.task('validate', ['jshint', 'ddescribe-iit', 'karma']);
 
 gulp.task('docs', function(done) {
   var docVersion = argv['doc-version'];
@@ -55,8 +62,11 @@ gulp.task('docs', function(done) {
     console.log('Usage: gulp docs --doc-version=(nightly|versionName)');
     return process.exit(1);
   }
-  process.env.DOC_VERSION = docVersion;
-  return dgeni(__dirname + '/docs/docs.config.js').generateDocs().then(function() {
+
+  var config = dgeni.loadConfig(path.join(__dirname, '/config/dgeni/docs.config.js'));
+  config.set('currentVersion', docVersion);
+
+  return dgeni.generator(config)().then(function() {
     gutil.log('Docs for', gutil.colors.cyan(docVersion), 'generated!');
   });
 });
@@ -69,8 +79,9 @@ gulp.task('watch', ['build'], function() {
 });
 
 gulp.task('changelog', function(done) {
+  var newCodename = fs.readFileSync('config/CODENAMES').toString().split('\n')[0];
   var file = argv.standalone ? '' : __dirname + '/CHANGELOG.md';
-  var subtitle = argv.subtitle || '"' + pkg.codename + '"';
+  var subtitle = argv.subtitle || '"' + newCodename + '"';
   var toHtml = !!argv.html;
   var dest = argv.dest || 'CHANGELOG.md';
   var from = argv.from;
@@ -100,30 +111,39 @@ gulp.task('bundle', [
 ], function() {
   IS_RELEASE_BUILD && gulp.src(buildConfig.ionicBundleFiles.map(function(src) {
       return src.replace(/.js$/, '.min.js');
-    }))
+    }), {
+      base: buildConfig.dist,
+      cwd: buildConfig.dist
+    })
       .pipe(header(buildConfig.bundleBanner))
       .pipe(concat('ionic.bundle.min.js'))
-      .pipe(gulp.dest(buildConfig.distJs));
+      .pipe(gulp.dest(buildConfig.dist + '/js'));
 
-  return gulp.src(buildConfig.ionicBundleFiles)
+  return gulp.src(buildConfig.ionicBundleFiles, {
+    base: buildConfig.dist,
+    cwd: buildConfig.dist
+  })
     .pipe(header(buildConfig.bundleBanner))
     .pipe(concat('ionic.bundle.js'))
-    .pipe(gulp.dest(buildConfig.distJs));
+    .pipe(gulp.dest(buildConfig.dist + '/js'));
 });
 
 gulp.task('jshint', function() {
-  return gulp.src(['js/**/*.js', 'test/**/*.js'])
+  return gulp.src(['js/**/*.js'])
     .pipe(jshint('.jshintrc'))
-    .pipe(jshint.reporter('jshint-stylish'));
+    .pipe(jshint.reporter(require('jshint-summary')({
+      fileColCol: ',bold',
+      positionCol: ',bold',
+      codeCol: 'green,bold',
+      reasonCol: 'cyan'
+    })))
+    .pipe(jshint.reporter('fail'));
 });
 
 gulp.task('ddescribe-iit', function() {
   return gulp.src(['test/**/*.js', 'js/**/*.js'])
     .pipe(notContains([
-      'ddescribe',
-      'iit',
-      'xit',
-      'xdescribe'
+      'ddescribe', 'iit', 'xit', 'xdescribe'
     ]));
 });
 
@@ -143,11 +163,11 @@ gulp.task('scripts', function() {
     .pipe(header(buildConfig.closureStart))
     .pipe(footer(buildConfig.closureEnd))
     .pipe(header(banner))
-    .pipe(gulp.dest(buildConfig.distJs))
+    .pipe(gulp.dest(buildConfig.dist + '/js'))
     .pipe(gulpif(IS_RELEASE_BUILD, uglify()))
     .pipe(rename({ extname: '.min.js' }))
     .pipe(header(banner))
-    .pipe(gulp.dest(buildConfig.distJs));
+    .pipe(gulp.dest(buildConfig.dist + '/js'));
 });
 
 gulp.task('scripts-ng', function() {
@@ -157,11 +177,11 @@ gulp.task('scripts-ng', function() {
     .pipe(header(buildConfig.closureStart))
     .pipe(footer(buildConfig.closureEnd))
     .pipe(header(banner))
-    .pipe(gulp.dest(buildConfig.distJs))
+    .pipe(gulp.dest(buildConfig.dist + '/js'))
     .pipe(gulpif(IS_RELEASE_BUILD, uglify()))
     .pipe(rename({ extname: '.min.js' }))
     .pipe(header(banner))
-    .pipe(gulp.dest(buildConfig.distJs));
+    .pipe(gulp.dest(buildConfig.dist + '/js'));
 });
 
 gulp.task('sass', function(done) {
@@ -178,10 +198,10 @@ gulp.task('sass', function(done) {
       }
     }))
     .pipe(concat('ionic.css'))
-    .pipe(gulp.dest(buildConfig.distCss))
-    // .pipe(gulpif(IS_RELEASE_BUILD, minifyCss()))
+    .pipe(gulp.dest(buildConfig.dist + '/css'))
+    .pipe(gulpif(IS_RELEASE_BUILD, minifyCss()))
     .pipe(rename({ extname: '.min.css' }))
-    .pipe(gulp.dest(buildConfig.distCss))
+    .pipe(gulp.dest(buildConfig.dist + '/css'))
     .on('end', done);
 });
 
@@ -198,7 +218,7 @@ gulp.task('version', function() {
       time: time
     }))
     .pipe(rename('version.json'))
-    .pipe(gulp.dest('dist'));
+    .pipe(gulp.dest(buildConfig.dist));
 });
 
 gulp.task('release-tweet', function(done) {
@@ -251,18 +271,18 @@ gulp.task('docs-index', function() {
   }
 
   return gulp.src([
-    'tmp/ionic-site/docs/{components,guide,api,overview}/**/*.{md,html,markdown}',
-    'tmp/ionic-site/docs/index.html',
-    'tmp/ionic-site/getting-started/index.html',
-    'tmp/ionic-site/tutorials/**/*.{md,html,markdown}',
-    'tmp/ionic-site/_posts/**/*.{md,html,markdown}'
+    'temp/ionic-site/docs/{components,guide,api,overview}/**/*.{md,html,markdown}',
+    'temp/ionic-site/docs/index.html',
+    'temp/ionic-site/getting-started/index.html',
+    'temp/ionic-site/tutorials/**/*.{md,html,markdown}',
+    'temp/ionic-site/_posts/**/*.{md,html,markdown}'
   ])
     .pipe(es.map(function(file, callback) {
       //docs for gulp file objects: https://github.com/wearefractal/vinyl
       var contents = file.contents.toString(); //was buffer
 
       // Grab relative path from ionic-site root
-      var relpath = file.path.replace(/^.*?tmp\/ionic-site\//, '');
+      var relpath = file.path.replace(/^.*?temp\/ionic-site\//, '');
 
       // Read out the yaml portion of the Jekyll file
       var yamlStartIndex = contents.indexOf('---');
@@ -356,9 +376,9 @@ gulp.task('docs-index', function() {
 
     })).on('end', function() {
       // Write out as one json file
-      mkdirp.sync('tmp/ionic-site/data');
+      mkdirp.sync('temp/ionic-site/data');
       fs.writeFileSync(
-        'tmp/ionic-site/data/index.json',
+        'temp/ionic-site/data/index.json',
         JSON.stringify({'ref': ref, 'index': idx.toJSON()})
       );
     });
@@ -371,10 +391,23 @@ gulp.task('cloudtest', ['protractor-sauce'], function(cb) {
 });
 
 gulp.task('karma', function(cb) {
-  return karma(cb, [__dirname + '/config/karma.conf.js', '--single-run=true']);
+  var config = require('./config/karma.conf.js');
+  config.singleRun = true;
+  if (argv.browsers) {
+    config.browsers = argv.browsers.trim().split(',');
+  }
+  if (argv.reporters) {
+    config.reporters = argv.reporters.trim().split(',');
+  }
+  return karma.start(config, cb);
 });
 gulp.task('karma-watch', function(cb) {
-  return karma(cb, [__dirname + '/config/karma.conf.js']);
+  return karma.start(_.assign(require('./config/karma.conf.js'), {singleRun: false}), cb);
+});
+gulp.task('karma-sauce', ['sauce-connect'], function(cb) {
+  return karma.start(require('./config/karma-sauce.conf.js'), function() {
+    sauceDisconnect(cb);
+  });
 });
 
 var connectServer;
@@ -390,12 +423,6 @@ gulp.task('protractor-sauce', ['sauce-connect', 'connect-server'], function(cb) 
 });
 
 function karma(cb, args) {
-  if (argv.browsers) {
-    args.push('--browsers='+argv.browsers.trim());
-  }
-  if (argv.reporters) {
-    args.push('--reporters='+argv.reporters.trim());
-  }
   cp.spawn('node', [
     __dirname + '/node_modules/karma/bin/karma',
     'start'

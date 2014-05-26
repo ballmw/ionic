@@ -96,6 +96,119 @@ var POPUP_TPL =
  *});
  *```
  */
+
+/**
+ * @ngdoc demo
+ * @name $ionicPopup#simple
+ * @module popupSimple
+ * @javascript
+angular.module('popupSimple', ['ionic'])
+.controller('PopupCtrl', function($scope, $timeout, $q, $ionicPopup) {
+  $scope.showPopup = function() {
+    $scope.data = {}
+
+    $ionicPopup.show({
+      templateUrl: 'popup-template.html',
+      title: 'Enter Wi-Fi Password',
+      subTitle: 'Please use normal things',
+      scope: $scope,
+      buttons: [
+        { text: 'Cancel', onTap: function(e) { return true; } },
+        {
+          text: '<b>Save</b>',
+          type: 'button-positive',
+          onTap: function(e) {
+            return $scope.data.wifi;
+          }
+        },
+      ]
+      }).then(function(res) {
+        console.log('Tapped!', res);
+      }, function(err) {
+        console.log('Err:', err);
+      }, function(msg) {
+        console.log('message:', msg);
+      });
+
+    $timeout(function() {
+      $ionicPopup.confirm({
+        title: 'Do you like ice cream?',
+        cancelText: 'No',
+        okText: 'Yes, of course'
+      }).then(function(res) {
+        console.log('Your love for ice cream:', res);
+      });
+    }, 1000);
+  };
+
+  $scope.showConfirm = function() {
+    $ionicPopup.confirm({
+      title: 'Consume Ice Cream',
+      content: 'Are you sure you want to eat this ice cream?'
+    }).then(function(res) {
+      if(res) {
+        console.log('You are sure');
+      } else {
+        console.log('You are not sure');
+      }
+    });
+  };
+  $scope.showPrompt = function() {
+    $ionicPopup.prompt({
+      title: 'ID Check',
+      subTitle: 'What is your name?'
+    }).then(function(res) {
+      console.log('Your name is', res);
+    });
+  };
+  $scope.showPasswordPrompt = function() {
+    $ionicPopup.prompt({
+      title: 'Password Check',
+      subTitle: 'Enter your secret password',
+      inputType: 'password',
+      inputPlaceholder: 'Your password'
+    }).then(function(res) {
+      console.log('Your name is', res);
+    });
+  };
+  $scope.showAlert = function() {
+    $ionicPopup.alert({
+      title: 'Draft Saved',
+      content: 'Your Data has been saved!'
+    }).then(function(res) {
+      console.log('Your Data has been saved!');
+    }, function(err) {},
+    function(popup) {
+      console.log('Got popup', popup);
+      $timeout(function() {
+        popup.close();
+      }, 1000);
+    });
+  };
+});
+ * @html
+<ion-header-bar class="bar-positive">
+  <h1 class="title">Popups</h1>
+</ion-header-bar>
+<ion-content ng-controller="PopupCtrl">
+  <button class="button button-dark" ng-click="showPopup()">Generic</button>
+  <button class="button button-primary" ng-click="showConfirm()">Confirm</button>
+  <button class="button button-balanced" ng-click="showPrompt()">Prompt</button>
+  <button class="button button-balanced" ng-click="showPasswordPrompt()">Password Prompt</button>
+  <button class="button button-positive" ng-click="showAlert()">Alert</button>
+  <div class="list">
+    <a class="item" href="#"
+      ng-repeat="item in [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]">
+      Item {{item}}
+    </a>
+  </div>
+</ion-content>
+
+<script id="popup-template.html" type="text/ng-template">
+  <input ng-model="data.wifi" type="text" placeholder="Password">
+</script>
+ *
+ */
 IonicModule
 .factory('$ionicPopup', [
   '$ionicTemplateLoader',
@@ -262,7 +375,7 @@ function($ionicTemplateLoader, $ionicBackdrop, $q, $timeout, $rootScope, $docume
   return $ionicPopup;
 
   function createPopup(options) {
-    options = angular.extend({
+    options = extend({
       scope: null,
       title: '',
       buttons: [],
@@ -287,7 +400,7 @@ function($ionicTemplateLoader, $ionicBackdrop, $q, $timeout, $rootScope, $docume
 
       //Can't ng-bind-html for popup-body because it can be insecure html
       //(eg an input in case of prompt)
-      var body = angular.element(self.element[0].querySelector('.popup-body'));
+      var body = jqLite(self.element[0].querySelector('.popup-body'));
       if (content) {
         body.html(content);
         $compile(body.contents())(self.scope);
@@ -295,7 +408,7 @@ function($ionicTemplateLoader, $ionicBackdrop, $q, $timeout, $rootScope, $docume
         body.remove();
       }
 
-      angular.extend(self.scope, {
+      extend(self.scope, {
         title: options.title,
         buttons: options.buttons,
         subTitle: options.subTitle,
@@ -424,7 +537,7 @@ function($ionicTemplateLoader, $ionicBackdrop, $q, $timeout, $rootScope, $docume
   }
 
   function showAlert(opts) {
-    return showPopup( angular.extend({
+    return showPopup( extend({
       buttons: [{
         text: opts.okText || 'OK',
         type: opts.okType || 'button-positive',
@@ -436,7 +549,7 @@ function($ionicTemplateLoader, $ionicBackdrop, $q, $timeout, $rootScope, $docume
   }
 
   function showConfirm(opts) {
-    return showPopup( angular.extend({
+    return showPopup( extend({
       buttons: [{
         text: opts.cancelText || 'Cancel' ,
         type: opts.cancelType || 'button-default',
@@ -452,7 +565,7 @@ function($ionicTemplateLoader, $ionicBackdrop, $q, $timeout, $rootScope, $docume
   function showPrompt(opts) {
     var scope = $rootScope.$new(true);
     scope.data = {};
-    return showPopup( angular.extend({
+    return showPopup( extend({
       template: '<input ng-model="data.response" type="' + (opts.inputType || 'text') +
         '" placeholder="' + (opts.inputPlaceholder || '') + '">',
       scope: scope,

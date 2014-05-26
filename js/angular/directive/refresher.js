@@ -57,6 +57,45 @@
  * the refresher.
  *
  */
+/**
+ * @ngdoc demo
+ * @name ionRefresher#withAList
+ * @module refresherList
+ * @javascript
+ * angular.module('refresherList', ['ionic'])
+ * .controller('RefresherCtrl', function($scope, $timeout) {
+ *   $scope.items = ['Item 1', 'Item 2', 'Item 3'];
+ *
+ *   $scope.doRefresh = function() {
+ *     $timeout(function() {
+ *       $scope.items.push('New Item ' + Math.floor(Math.random() * 1000) + 4);
+ *       $scope.items.push('New Item ' + Math.floor(Math.random() * 1000) + 4);
+ *       $scope.items.push('New Item ' + Math.floor(Math.random() * 1000) + 4);
+ *       $scope.items.push('New Item ' + Math.floor(Math.random() * 1000) + 4);
+ *       $scope.$broadcast('scroll.refreshComplete');
+ *     }, 1000);
+ *   };
+ * });
+ *
+ * @html
+ * <ion-header-bar class="bar-positive">
+ *   <h1 class="title">Refresher</h1>
+ * </ion-header-bar>
+ *
+ * <ion-content ng-controller="RefresherCtrl">
+ *
+ *   <ion-refresher on-refresh="doRefresh()"
+ *                  pulling-text="Pull to refresh..."
+ *                  refreshing-text="Refreshing!"
+ *                  refreshing-icon="ion-loading-c">
+ *   </ion-refresher>
+ *
+ *   <ion-list>
+ *     <ion-item ng-repeat="item in items">{{item}}</ion-item>
+ *   </ion-list>
+ *
+ * </ion-content>
+ */
 IonicModule
 .directive('ionRefresher', ['$ionicBind', function($ionicBind) {
   return {
@@ -65,8 +104,11 @@ IonicModule
     require: '^$ionicScroll',
     template:
     '<div class="scroll-refresher">' +
-      '<div class="ionic-refresher-content">' +
-        '<i class="icon {{pullingIcon}} icon-pulling"></i>' +
+      '<div class="ionic-refresher-content" ' +
+      'ng-class="{\'ionic-refresher-with-text\': pullingText || refreshingText}">' +
+        '<div class="icon-pulling">' +
+          '<i class="icon {{pullingIcon}}"></i>' +
+        '</div>' +
         '<div class="text-pulling" ng-bind-html="pullingText"></div>' +
         '<i class="icon {{refreshingIcon}} icon-refreshing"></i>' +
         '<div class="text-refreshing" ng-bind-html="refreshingText"></div>' +
@@ -91,8 +133,10 @@ IonicModule
 
         scrollCtrl._setRefresher($scope, $element[0]);
         $scope.$on('scroll.refreshComplete', function() {
-          $element[0].classList.remove('active');
-          scrollCtrl.scrollView.finishPullToRefresh();
+          $scope.$evalAsync(function() {
+            $element[0].classList.remove('active');
+            scrollCtrl.scrollView.finishPullToRefresh();
+          });
         });
       };
     }

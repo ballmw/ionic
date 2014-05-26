@@ -5,6 +5,7 @@
  * @description
  * The Modal is a content pane that can go over the user's main view
  * temporarily.  Usually used for making a choice or editing an item.
+ * Note that you need to put the content of the modal inside a div with the class `modal`.
  *
  * @usage
  * ```html
@@ -22,7 +23,7 @@
  * ```js
  * angular.module('testApp', ['ionic'])
  * .controller('MyController', function($scope, $ionicModal) {
- *   $ionicModal.fromTemplateUrl('modal.html', {
+ *   $ionicModal.fromTemplateUrl('my-modal.html', {
  *     scope: $scope,
  *     animation: 'slide-in-up'
  *   }).then(function(modal) {
@@ -37,6 +38,14 @@
  *   //Cleanup the modal when we're done with it!
  *   $scope.$on('$destroy', function() {
  *     $scope.modal.remove();
+ *   });
+ *   // Execute action on hide modal
+ *   $scope.$on('modal.hide', function() {
+ *     // Execute action
+ *   });
+ *   // Execute action on remove modal
+ *   $scope.$on('modal.removed', function() {
+ *     // Execute action
  *   });
  * });
  * ```
@@ -77,6 +86,8 @@ function($rootScope, $document, $compile, $timeout, $ionicPlatform, $ionicTempla
      *    Default: 'slide-in-up'
      *  - `{boolean=}` `focusFirstInput` Whether to autofocus the first input of
      *    the modal when shown.  Default: false.
+     *  - `{boolean=} `backdropClickToClose` Whether to close the modal on clicking the backdrop.
+     *    Default: true.
      */
     initialize: function(opts) {
       ionic.views.Modal.prototype.initialize.call(this, opts);
@@ -91,12 +102,20 @@ function($rootScope, $document, $compile, $timeout, $ionicPlatform, $ionicTempla
      */
     show: function() {
       var self = this;
-      var modalEl = angular.element(self.modalEl);
+
+      if(self.scope.$$destroyed) {
+        console.error('Cannot call modal.show() after remove(). Please create a new modal instance using $ionicModal.');
+        return;
+      }
+
+      console.log(self.scope);
+
+      var modalEl = jqLite(self.modalEl);
 
       self.el.classList.remove('hide');
       $timeout(function(){
         $document[0].body.classList.add('modal-open');
-      }, 400)
+      }, 400);
 
 
       if(!self.el.parentElement) {
@@ -124,7 +143,7 @@ function($rootScope, $document, $compile, $timeout, $ionicPlatform, $ionicTempla
       return $timeout(function() {
         //After animating in, allow hide on backdrop click
         self.$el.on('click', function(e) {
-          if (e.target === self.el) {
+          if (self.backdropClickToClose && e.target === self.el) {
             self.hide();
           }
         });
@@ -139,7 +158,7 @@ function($rootScope, $document, $compile, $timeout, $ionicPlatform, $ionicTempla
      */
     hide: function() {
       var self = this;
-      var modalEl = angular.element(self.modalEl);
+      var modalEl = jqLite(self.modalEl);
 
       self.el.classList.remove('active');
       modalEl.addClass('ng-leave');
@@ -192,7 +211,7 @@ function($rootScope, $document, $compile, $timeout, $ionicPlatform, $ionicTempla
     // Create a new scope for the modal
     var scope = options.scope && options.scope.$new() || $rootScope.$new(true);
 
-    angular.extend(scope, {
+    extend(scope, {
       $hasHeader: false,
       $hasSubheader: false,
       $hasFooter: false,

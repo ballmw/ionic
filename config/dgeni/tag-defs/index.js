@@ -16,10 +16,10 @@ module.exports = [
       });
     }
   },
-  {
-    name: 'codepen'
-  },
-  {
-    name: 'alias'
-  }
+  { name: 'codepen' },
+  { name: 'alias' },
+  { name: 'demo' },
+  { name: 'javascript' },
+  { name: 'html' },
+  { name: 'css' }
 ];

@@ -188,7 +188,7 @@ function($rootScope, $timeout) {
         this.renderItem(i, rect.primaryPos - startPos, rect.secondaryPos);
         i++;
       }
-      var bufferEndIndex = i -1;
+      var bufferEndIndex = i - 1;
 
       for (i in this.renderedItems) {
         if (i < bufferStartIndex || i > bufferEndIndex) {
@@ -201,15 +201,12 @@ function($rootScope, $timeout) {
     },
     renderItem: function(dataIndex, primaryPos, secondaryPos) {
       var item = this.dataSource.getItem(dataIndex);
-      if (item) {
+      if (item && item.element) {
         this.dataSource.attachItem(item);
-        item.element[0].style[ionic.CSS.TRANSFORM] = this.transformString(
+        item.element.css(ionic.CSS.TRANSFORM, this.transformString(
           primaryPos, secondaryPos, secondaryPos
-        );
+        ));
         this.renderedItems[dataIndex] = item;
-        if (item.scope && !item.scope.$$phase) {
-          item.scope.$digest();
-        }
       } else {
         delete this.renderedItems[dataIndex];
       }

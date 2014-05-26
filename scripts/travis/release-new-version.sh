@@ -1,59 +1,55 @@
 #!/bin/bash
 
-echo "##############################"
-echo "# Pushing release to $RELEASE_REMOTE #"
-echo "##############################"
-
 ARG_DEFS=(
   "--version=(.*)"
+  "[--old-version=(.*)]"
 )
 
 function init {
-  TMP_DIR=$SCRIPT_DIR/../../tmp
-  BUILD_DIR=$SCRIPT_DIR/../../dist
-  PROJECT_DIR=$SCRIPT_DIR/../..
+  PUSH_DIR=$IONIC_DIST_DIR/ionic
 
-  IONIC_DIR=$TMP_DIR/ionic
+  echo "-- Cloning ionic master ..."
+
+  rm -rf $PUSH_DIR
+  mkdir -p $PUSH_DIR
+  git clone https://driftyco:$GH_TOKEN@github.com/driftyco/ionic.git \
+    $PUSH_DIR \
+    --depth=1
 }
 
 function run {
-  cd ../..
 
-  rm -rf $IONIC_DIR
-  mkdir -p $IONIC_DIR
+  echo "##############################"
+  echo "# Pushing release $VERSION   #"
+  echo "##############################"
 
-  git clone https://$GH_ORG:$GH_TOKEN@github.com/$GH_ORG/ionic.git \
-    $IONIC_DIR \
-    --depth=10
-
-  cd $IONIC_DIR
+  cd $PUSH_DIR
 
   # Get first codename in list
-  CODENAME=$(cat config/CODENAMES | head -n 1)
+  CODENAME=$(readJsonProp "$IONIC_DIR/package.json" "codename")
 
-  # Remove first line of codenames, it's used now
-  sed -i '' 1d config/CODENAMES
-
+  replaceJsonProp "package.json" "version" "$VERSION"
   replaceJsonProp "bower.json" "version" "$VERSION"
   replaceJsonProp "component.json" "version" "$VERSION"
 
-  replaceJsonProp "package.json" "codename" "$CODENAME"
-  replaceJsonProp "bower.json" "codename" "$CODENAME"
-  replaceJsonProp "component.json" "codename" "$CODENAME"
-
   echo "-- Putting built files into release folder"
+
+  rm -rf release
   mkdir -p release
-  cp -Rf $PROJECT_DIR/dist/* release
+  cp -Rf $IONIC_BUILD_DIR/* release
 
   git add -A
   git commit -m "finalize-release: v$VERSION \"$CODENAME\""
   git tag -f -m "v$VERSION" v$VERSION
 
-  git push -q $RELEASE_REMOTE master
-  git push -q $RELEASE_REMOTE v$VERSION
+  git push -q origin master
+  git push -q origin v$VERSION
 
-  echo "-- v$VERSION \"$CODENAME\" pushed to $RELEASE_REMOTE/master successfully!"
+  echo "-- v$VERSION \"$CODENAME\" pushed to origin/master successfully!"
+}
 
+function tweetAndIrc {
+  cd $IONIC_DIR
   gulp release-tweet release-irc
 }
 
